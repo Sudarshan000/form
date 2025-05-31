@@ -6,7 +6,7 @@ import { generateId } from '~/lib/utils';
 export const PropertyPanel: React.FC = () => {
   const { state, dispatch } = useFormBuilder();
   
-  const selectedField = state.currentForm?.fields.find(
+  const selectedField = state.form?.fields.find(
     field => field.id === state.selectedFieldId
   );
 

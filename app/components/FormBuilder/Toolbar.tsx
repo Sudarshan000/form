@@ -1,5 +1,5 @@
 import { useFormBuilder } from "~/lib/formBuilderContext";
-import { exportFormAsJSON, generateFormId } from "~/lib/utils";
+import { exportFormAsJSON, generateId } from "~/lib/utils";
 import { useState } from "react";
 import { Link } from "@remix-run/react";
 
@@ -29,7 +29,7 @@ export function Toolbar({ onTogglePreview, showPreview }: ToolbarProps) {
     
     // Generate form ID if it doesn't exist
     if (!state.form.id) {
-      const formId = generateFormId();
+      const formId = generateId();
       dispatch({
         type: 'UPDATE_FORM_SETTINGS',
         payload: { id: formId }
@@ -46,16 +46,7 @@ export function Toolbar({ onTogglePreview, showPreview }: ToolbarProps) {
   };
 
   const handleExport = () => {
-    const jsonData = exportFormAsJSON(state.form);
-    const blob = new Blob([jsonData], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${state.form.title || 'form'}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    exportFormAsJSON(state.form);
   };
 
   const handleShare = async () => {
@@ -63,7 +54,7 @@ export function Toolbar({ onTogglePreview, showPreview }: ToolbarProps) {
       await handleSave();
     }
     
-    const formId = state.form.id || generateFormId();
+    const formId = state.form.id || generateId();
     const url = `${window.location.origin}/forms/${formId}`;
     setShareUrl(url);
     setShowShareModal(true);
@@ -187,7 +178,7 @@ export function Toolbar({ onTogglePreview, showPreview }: ToolbarProps) {
 
             <Link
               to="/forms"
-              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+              className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -197,7 +188,7 @@ export function Toolbar({ onTogglePreview, showPreview }: ToolbarProps) {
 
             <Link
               to="/"
-              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+              className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />

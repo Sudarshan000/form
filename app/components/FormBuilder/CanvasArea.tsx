@@ -126,11 +126,11 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({ draggedFieldType }) => {
     const { active, over } = event;
 
     if (active.id !== over?.id) {
-      const oldIndex = state.currentForm?.fields.findIndex(field => field.id === active.id);
-      const newIndex = state.currentForm?.fields.findIndex(field => field.id === over?.id);
+      const oldIndex = state.form?.fields.findIndex(field => field.id === active.id);
+      const newIndex = state.form?.fields.findIndex(field => field.id === over?.id);
 
-      if (oldIndex !== undefined && newIndex !== undefined && state.currentForm) {
-        const newFields = arrayMove(state.currentForm.fields, oldIndex, newIndex);
+      if (oldIndex !== undefined && newIndex !== undefined && state.form) {
+        const newFields = arrayMove(state.form.fields, oldIndex, newIndex);
         dispatch(formBuilderActions.reorderFields(newFields));
       }
     }
@@ -145,7 +145,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({ draggedFieldType }) => {
       const newField: FormField = {
         ...defaultField,
         id: generateId(),
-        order: state.currentForm?.fields.length || 0,
+        order: state.form?.fields.length || 0,
       };
 
       dispatch(formBuilderActions.addField(newField));
@@ -172,7 +172,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({ draggedFieldType }) => {
     dispatch(formBuilderActions.removeField(fieldId));
   };
 
-  if (!state.currentForm) {
+  if (!state.form) {
     return (
       <div className="flex-1 flex items-center justify-center bg-gray-50">
         <div className="text-center">
@@ -189,14 +189,14 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({ draggedFieldType }) => {
         <div className="mb-8 p-6 bg-white rounded-lg shadow-sm border border-gray-200">
           <input
             type="text"
-            value={state.currentForm.title}
-            onChange={(e) => dispatch(formBuilderActions.updateFormInfo({ title: e.target.value }))}
+            value={state.form.title}
+            onChange={(e) => dispatch(formBuilderActions.updateFormSettings({ title: e.target.value }))}
             className="text-2xl font-bold text-gray-900 border-none outline-none w-full bg-transparent"
             placeholder="Form Title"
           />
           <textarea
-            value={state.currentForm.description || ''}
-            onChange={(e) => dispatch(formBuilderActions.updateFormInfo({ description: e.target.value }))}
+            value={state.form.description || ''}
+            onChange={(e) => dispatch(formBuilderActions.updateFormSettings({ description: e.target.value }))}
             className="mt-2 text-gray-600 border-none outline-none w-full bg-transparent resize-none"
             placeholder="Form description (optional)"
             rows={2}
@@ -216,7 +216,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({ draggedFieldType }) => {
             }
           `}
         >
-          {state.currentForm.fields.length === 0 ? (
+          {state.form.fields.length === 0 ? (
             <div className="flex items-center justify-center h-64">
               <div className="text-center">
                 <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -236,11 +236,11 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({ draggedFieldType }) => {
                 onDragEnd={handleDragEnd}
               >
                 <SortableContext
-                  items={state.currentForm.fields.map(field => field.id)}
+                  items={state.form.fields.map(field => field.id)}
                   strategy={verticalListSortingStrategy}
                 >
                   <div className="space-y-4">
-                    {state.currentForm.fields.map((field) => (
+                    {state.form.fields.map((field) => (
                       <SortableField
                         key={field.id}
                         field={field}
@@ -263,7 +263,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({ draggedFieldType }) => {
             className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-700 transition-colors"
             disabled
           >
-            {state.currentForm.settings.submitButtonText}
+            {state.form.settings.submitButtonText}
           </button>
         </div>
       </div>
