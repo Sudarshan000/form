@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useReducer, useEffect } from "react";
 import type { FormData, FormField } from "~/lib/types";
 import { createDefaultForm, generateId } from "~/lib/utils";
+import { validateForm, safelyStoreForm, safelyRetrieveForm } from "~/lib/debug";
 
 // Form Builder State
 interface FormBuilderState {
@@ -120,27 +121,20 @@ const formBuilderReducer = (
       return {
         ...state,
         isDirty: action.payload,
+      };    case "SAVE_FORM":
+      // Ensure form has all required properties
+      const formToSave = {
+        ...state.form,
+        fields: Array.isArray(state.form.fields) ? state.form.fields : [],
+        updatedAt: new Date().toISOString()
       };
-
-    case "SAVE_FORM":
-      // Save form to localStorage
-      const savedForms = JSON.parse(
-        localStorage.getItem("formcraft_forms") || "[]"
-      );
-      const existingFormIndex = savedForms.findIndex(
-        (f: FormData) => f.id === state.form.id
-      );
-
-      if (existingFormIndex >= 0) {
-        savedForms[existingFormIndex] = state.form;
-      } else {
-        savedForms.push(state.form);
-      }
-
-      localStorage.setItem("formcraft_forms", JSON.stringify(savedForms));
+      
+      // Save form to localStorage using our helper
+      safelyStoreForm(formToSave, "formBuilderReducer.SAVE_FORM");
 
       return {
         ...state,
+        form: formToSave,
         isDirty: false,
       };
 
@@ -167,15 +161,10 @@ export const FormBuilderProvider: React.FC<{
   children: React.ReactNode;
   initialFormId?: string;
 }> = ({ children, initialFormId }) => {
-  const [state, dispatch] = useReducer(formBuilderReducer, initialState);
-
-  // Load form on mount if formId provided
+  const [state, dispatch] = useReducer(formBuilderReducer, initialState);  // Load form on mount if formId provided
   useEffect(() => {
     if (initialFormId) {
-      const savedForms = JSON.parse(
-        localStorage.getItem("formcraft_forms") || "[]"
-      );
-      const form = savedForms.find((f: FormData) => f.id === initialFormId);
+      const form = safelyRetrieveForm(initialFormId, "FormBuilderProvider.initialLoad");
       if (form) {
         dispatch({ type: "LOAD_FORM", payload: form });
       }

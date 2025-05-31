@@ -23,6 +23,8 @@ export interface FieldValidation {
   maxLength?: number;
   pattern?: string;
   customMessage?: string;
+  min?: number;
+  max?: number;
 }
 
 export type FieldType = 
@@ -30,12 +32,14 @@ export type FieldType =
   | 'textarea' 
   | 'email'
   | 'phone'
+  | 'tel'   // Alias for phone
   | 'number'
   | 'date'
   | 'dropdown'
   | 'radio'
   | 'checkbox'
-  | 'file';
+  | 'file'
+  | 'url';  // For URL fields
 
 export interface FormData {
   id: string;

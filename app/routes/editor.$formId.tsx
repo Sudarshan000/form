@@ -1,4 +1,6 @@
-import type { MetaFunction } from "@remix-run/node";
+import { useEffect } from "react";
+import type { MetaFunction, LoaderFunctionArgs } from "@remix-run/node";
+import { useLoaderData, useNavigate } from "@remix-run/react";
 import { FormBuilderProvider } from "~/lib/formBuilderContext";
 import { FieldLibrary } from "~/components/FormBuilder/FieldLibrary";
 import { CanvasArea } from "~/components/FormBuilder/CanvasArea";
@@ -7,33 +9,72 @@ import { PreviewPanel } from "~/components/FormBuilder/PreviewPanel";
 import { Toolbar } from "~/components/FormBuilder/Toolbar";
 import { useState } from "react";
 import type { FieldType } from "~/lib/types";
-import { useSearchParams } from "@remix-run/react";
+import { safelyRetrieveForm, debugLog, inspectLocalStorageForms } from "~/lib/debug";
 
-export const meta: MetaFunction = () => {
+export const meta: MetaFunction<typeof loader> = ({ data }) => {
   return [
-    { title: "Form Builder - FormCraft" },
-    { name: "description", content: "Build beautiful, responsive forms with our drag-and-drop form builder." },
+    { title: data?.formTitle ? `Edit: ${data?.formTitle} - FormCraft` : "Edit Form - FormCraft" },
+    { name: "description", content: "Edit your form with our drag-and-drop form builder." },
   ];
 };
 
-export default function Builder() {
+export async function loader({ params }: LoaderFunctionArgs) {
+  const { formId } = params;
+  
+  if (!formId) {
+    throw new Response("Form ID is required", { status: 400 });
+  }
+
+  // In a real app, you'd fetch from a database
+  // For now, we'll just return the formId for client-side loading
+  return { formId, formTitle: `Form ${formId}` };
+}
+
+export default function Editor() {
+  const { formId } = useLoaderData<typeof loader>();
+  const navigate = useNavigate();
   const [showPreview, setShowPreview] = useState(false);
   const [draggedFieldType, setDraggedFieldType] = useState<FieldType | null>(null);
-  const [searchParams] = useSearchParams();
-  const formId = searchParams.get("formId");
+  const [formLoaded, setFormLoaded] = useState(false);
 
   const handleFieldDragStart = (fieldType: FieldType) => {
     setDraggedFieldType(fieldType);
   };
 
+  // Run form inspection on load
+  useEffect(() => {
+    inspectLocalStorageForms("editor.$formId.mount");
+    
+    // Check if the form exists
+    const form = safelyRetrieveForm(formId as string, "editor.$formId.checkExistence");
+    if (!form) {
+      debugLog("editor.$formId", "Form not found, redirecting to builder");
+      navigate("/builder");
+      return;
+    }
+    
+    setFormLoaded(true);
+  }, [formId, navigate]);
+
+  if (!formLoaded) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading form editor...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <FormBuilderProvider initialFormId={formId || undefined}>
+    <FormBuilderProvider initialFormId={formId}>
       <div className="h-screen flex flex-col bg-gray-50">
         {/* Header */}
         <header className="bg-white border-b border-gray-200 px-4 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <h1 className="text-xl font-semibold text-gray-900">FormCraft Builder</h1>
+              <h1 className="text-xl font-semibold text-gray-900">FormCraft Editor</h1>
             </div>
             <Toolbar onTogglePreview={() => setShowPreview(!showPreview)} showPreview={showPreview} />
           </div>

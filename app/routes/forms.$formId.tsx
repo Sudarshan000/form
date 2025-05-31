@@ -3,6 +3,7 @@ import { useLoaderData, Link } from "@remix-run/react";
 import { useState, useEffect } from "react";
 import { FieldRenderer } from "~/components/FieldRenderer";
 import type { FormData } from "~/lib/types";
+import { safelyRetrieveForm } from "~/lib/debug";
 
 export const meta: MetaFunction = ({ data }) => {
   const form = data?.form as FormData;
@@ -31,19 +32,13 @@ export default function FormFiller() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
+  const [loading, setLoading] = useState(true);  useEffect(() => {
     // Load form from localStorage
     const loadForm = () => {
       try {
-        const savedForms = localStorage.getItem('formcraft_forms');
-        if (savedForms) {
-          const forms: FormData[] = JSON.parse(savedForms);
-          const targetForm = forms.find(f => f.id === formId);
-          if (targetForm) {
-            setForm(targetForm);
-          }
+        const retrievedForm = safelyRetrieveForm(formId, "forms.$formId.loadForm");
+        if (retrievedForm) {
+          setForm(retrievedForm);
         }
       } catch (error) {
         console.error('Error loading form:', error);

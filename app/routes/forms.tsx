@@ -2,6 +2,7 @@ import type { MetaFunction } from "@remix-run/node";
 import { Link } from "@remix-run/react";
 import { useState, useEffect } from "react";
 import type { FormData } from "~/lib/types";
+import { validateForm, safelyStoreForm, inspectLocalStorageForms, resetFormFields } from "~/lib/debug";
 
 export const meta: MetaFunction = () => {
   return [
@@ -13,14 +14,19 @@ export const meta: MetaFunction = () => {
 export default function Forms() {
   const [forms, setForms] = useState<FormData[]>([]);
   const [loading, setLoading] = useState(true);
-
   useEffect(() => {
     // Load forms from localStorage
     const loadForms = () => {
       try {
         const savedForms = localStorage.getItem('formcraft_forms');
         if (savedForms) {
-          setForms(JSON.parse(savedForms));
+          const parsedForms: FormData[] = JSON.parse(savedForms);
+          // Validate each form to ensure fields are properly loaded
+          const validatedForms = parsedForms.map(form => 
+            validateForm(form, "forms.loadForms")
+          ).filter(Boolean) as FormData[];
+          
+          setForms(validatedForms);
         }
       } catch (error) {
         console.error('Error loading forms:', error);
@@ -38,20 +44,23 @@ export default function Forms() {
       setForms(updatedForms);
       localStorage.setItem('formcraft_forms', JSON.stringify(updatedForms));
     }
-  };
-
-  const duplicateForm = (form: FormData) => {
+  };  const duplicateForm = (form: FormData) => {
     const newForm = {
       ...form,
       id: `form_${Date.now()}`,
       title: `${form.title} (Copy)`,
+      fields: Array.isArray(form.fields) ? [...form.fields] : [],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
     
-    const updatedForms = [...forms, newForm];
-    setForms(updatedForms);
-    localStorage.setItem('formcraft_forms', JSON.stringify(updatedForms));
+    // Validate and store the duplicated form
+    const validatedForm = validateForm(newForm, "forms.duplicateForm");
+    if (validatedForm) {
+      const updatedForms = [...forms, validatedForm];
+      setForms(updatedForms);
+      safelyStoreForm(validatedForm, "forms.duplicateForm");
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -77,8 +86,7 @@ export default function Forms() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200">
+      {/* Header */}      <header className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div>
@@ -95,6 +103,19 @@ export default function Forms() {
                 </svg>
                 Create New Form
               </Link>
+              <button
+                onClick={() => {
+                  // Run diagnostics and show in console
+                  inspectLocalStorageForms("forms.runDiagnostics");
+                  alert("Form diagnostics complete. Check browser console for details.");
+                }}
+                className="bg-yellow-500 text-white px-4 py-2 rounded-md hover:bg-yellow-600 transition-colors flex items-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+                Run Diagnostics
+              </button>
               <Link
                 to="/"
                 className="bg-gray-100 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200 transition-colors flex items-center gap-2"
@@ -164,9 +185,8 @@ export default function Forms() {
                       </svg>
                     </button>
                     
-                    <div className="hidden absolute right-0 top-full mt-1 w-40 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-10">
-                      <Link
-                        to={`/builder?formId=${form.id}`}
+                    <div className="hidden absolute right-0 top-full mt-1 w-40 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-10">                      <Link
+                        to={`/editor/${form.id}`}
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                       >
                         Edit
@@ -176,12 +196,27 @@ export default function Forms() {
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                       >
                         Preview
-                      </Link>
-                      <button
+                      </Link>                      <button
                         onClick={() => duplicateForm(form)}
                         className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                       >
                         Duplicate
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (confirm('Do you want to reset all fields in this form? This action cannot be undone.')) {
+                            const resetForm = resetFormFields(form.id, "forms.resetFormFields");
+                            if (resetForm) {
+                              alert('Form fields have been reset. You can now start adding fields again.');
+                              // Refresh the form list
+                              const savedForms = JSON.parse(localStorage.getItem('formcraft_forms') || '[]');
+                              setForms(savedForms);
+                            }
+                          }
+                        }}
+                        className="w-full text-left px-4 py-2 text-sm text-orange-600 hover:bg-orange-50"
+                      >
+                        Reset Fields
                       </button>
                       <div className="border-t border-gray-100 my-1" />
                       <button
