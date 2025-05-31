@@ -1,41 +1,24 @@
-# Welcome to Remix!
+A dynamic drag-and-drop form builder built with Remix and Tailwind CSS. This tool allows users to create custom forms, configure fields, preview in real-time, and generate shareable form links.
+✨ Features
 
-- 📖 [Remix docs](https://remix.run/docs)
+    🧲 Drag and drop interface to build forms quickly
 
-## Development
+    ⚙️ Field settings panel for customization
 
-Run the dev server:
+    👀 Real-time preview while editing
 
-```shellscript
-npm run dev
-```
+    🧪 Built-in field validation
 
-## Deployment
+    🔗 Sharable links to completed forms
 
-First, build your app for production:
+    🌙 Responsive and clean UI with Tailwind CSS
 
-```sh
-npm run build
-```
+🚀 Tech Stack
 
-Then run the app in production mode:
+    Remix – Full stack React framework
 
-```sh
-npm start
-```
+    Tailwind CSS – Utility-first CSS framework
 
-Now you'll need to pick a host to deploy it to.
+    React DnD – For drag and drop functionality
 
-### DIY
-
-If you're familiar with deploying Node applications, the built-in Remix app server is production-ready.
-
-Make sure to deploy the output of `npm run build`
-
-- `build/server`
-- `build/client`
-
-## Styling
-
-This template comes with [Tailwind CSS](https://tailwindcss.com/) already configured for a simple default starting experience. You can use whatever css framework you prefer. See the [Vite docs on css](https://vitejs.dev/guide/features.html#css) for more information.
-# form
+    TypeScript – Type-safe development (if used)
